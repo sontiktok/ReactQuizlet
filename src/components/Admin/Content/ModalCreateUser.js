@@ -2,11 +2,20 @@ import { useState } from "react";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import { FcPlus } from "react-icons/fc";
-const ModalCreateUser = () => {
-  const [show, setShow] = useState(false);
+import { toast } from "react-toastify";
 
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
+import axios from "axios";
+const ModalCreateUser = (props) => {
+  const { show, setShow } = props;
+  const handleClose = () => {
+    setEmail("");
+    setPassword("");
+    setUsername("");
+    setRole("USER");
+    setImage("");
+    setPreviewImage("");
+    setShow(false);
+  };
 
   //define state
   const [email, setEmail] = useState("");
@@ -24,11 +33,61 @@ const ModalCreateUser = () => {
       setPreviewImage(null);
     }
   };
+
+  const validateEmail = (email) => {
+    return String(email)
+      .toLowerCase()
+      .match(
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+      );
+  };
+
+  const handleSubmitCrateUser = async () => {
+    //B1: Validae
+    const isValidEmail = validateEmail(email);
+    if (!isValidEmail) {
+      toast.error("Invalid email");
+      return;
+    }
+    if (!password) {
+      toast.error("Invalid password");
+      return;
+    }
+    //B2: Tao data cho api
+    // let data = {
+    //   email: email,
+    //   password: password,
+    //   username: username,
+    //   role: role,
+    //   userImage: image,
+    // };
+    //B3: Call api
+    const data = new FormData();
+    data.append("email", email);
+    data.append("password", password);
+    data.append("username", username);
+    data.append("role", role);
+    data.append("userImage", image);
+
+    let res = await axios.post(
+      "http://localhost:8081/api/v1/participant",
+      data
+    );
+    console.log("Check res: " + res);
+    if (res.data && res.data.EC === 0) {
+      toast.success(res.data.EM);
+      handleClose();
+    }
+    if (res.data && res.data.EC !== 0) {
+      toast.error(res.data.EM);
+    }
+  };
+
   return (
     <>
-      <Button variant="primary" onClick={handleShow}>
+      {/* <Button variant="primary" onClick={handleShow}>
         Launch demo modal
-      </Button>
+      </Button> */}
 
       <Modal
         show={show}
@@ -75,6 +134,7 @@ const ModalCreateUser = () => {
               <select
                 className="form-select"
                 onChange={(event) => setRole(event.target.value)}
+                value={role}
               >
                 <option value="USER">USER</option>
                 <option value="ADMIN">ADMIN</option>
@@ -107,7 +167,7 @@ const ModalCreateUser = () => {
           <Button variant="secondary" onClick={handleClose}>
             Close
           </Button>
-          <Button variant="primary" onClick={handleClose}>
+          <Button variant="primary" onClick={() => handleSubmitCrateUser()}>
             Save
           </Button>
         </Modal.Footer>
