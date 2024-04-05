@@ -52,21 +52,11 @@ const ModalCreateUser = (props) => {
       toast.error("Invalid password");
       return;
     }
-    //B2: Tao data cho api
-    // let data = {
-    //   email: email,
-    //   password: password,
-    //   username: username,
-    //   role: role,
-    //   userImage: image,
-    // };
-
-    //B3: Call api
     let data = await postCreateUser(email, password, username, role, image);
-    console.log("Check res: " + data);
     if (data && data.EC === 0) {
       toast.success(data.EM);
       handleClose();
+      await props.fetchListUsers();
     }
     if (data && data.EC !== 0) {
       toast.error(data.EM);
